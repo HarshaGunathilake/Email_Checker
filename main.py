@@ -14,7 +14,6 @@ def upload_file():
     )
     if file_path:
         try:
-          
             df_global = pd.read_csv(file_path)
            
             upload_button.place_forget()
@@ -35,17 +34,15 @@ def upload_file():
 
 def populate_table(df, treeview):
     """Populate a Treeview with DataFrame data."""
-    # Clear existing data
+
     for row in treeview.get_children():
         treeview.delete(row)
 
-    # Set up column headers
     treeview["columns"] = df.columns.tolist()
     for col in df.columns:
         treeview.heading(col, text=col)
         treeview.column(col, anchor="w", width=100)
     
-    # Insert rows into the table
     for _, row in df.iterrows():
         treeview.insert("", "end", values=row.tolist())
 
@@ -60,16 +57,34 @@ def save_and_filter():
     
     if df_global is not None:
         filtered_df = df_global[[selected_column]].drop_duplicates() 
-        # messagebox.showinfo("Success", f"Data filtered by column: {selected_column}")
         
+        # Show filtered table
         filtered_label.pack(pady=10)
         filtered_tree.pack(fill=tk.BOTH, expand=True)
+        export_button.pack(pady=10)
         
         populate_table(filtered_df, filtered_tree)
     else:
         messagebox.showerror("Error", "No data to filter. Please upload a CSV file first.")
 
+def export_filtered_data():
+    """Export the filtered data to a CSV file."""
+    if filtered_df is not None:
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title="Save Filtered Data"
+        )
+        if file_path:
+            try:
+                filtered_df.to_csv(file_path, index=False)
+                messagebox.showinfo("Success", f"Filtered data saved to {file_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save file\n{e}")
+    else:
+        messagebox.showerror("Error", "No filtered data to export.")
 
+# Create the main window
 window = tk.Tk()
 window.title("Email CSV ")
 window.geometry('800x600')
@@ -105,6 +120,9 @@ filtered_label.pack_forget()
 
 filtered_tree = ttk.Treeview(left_frame, show="headings", height=10)
 filtered_tree.pack_forget()
+
+export_button = tk.Button(left_frame, text="Export Filtered Data", command=export_filtered_data, bg='#28a745', fg='white', font=("Arial", 10))
+export_button.pack_forget()
 
 upload_button = tk.Button(window, text="Upload CSV", command=upload_file, bg='#555555', fg='white', font=("Arial", 10))
 upload_button.place(relx=0.5, rely=0.5, anchor="center")
